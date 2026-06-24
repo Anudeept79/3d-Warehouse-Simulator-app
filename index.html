@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WarePro — Warehouse Digital Twin</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="splash">
+  <div class="sl"><svg width="42" height="42" viewBox="0 0 32 32" fill="none">
+    <path d="M16 2 29 9.5v13L16 30 3 22.5v-13L16 2Z" stroke="#22d3ee" stroke-width="1.6"/>
+    <path d="M16 2v13M16 15 3 9.5M16 15l13-5.5M16 30V15" stroke="#22d3ee" stroke-width="1.2" opacity=".7"/>
+    <circle cx="16" cy="15" r="2.4" fill="#22d3ee"/></svg>
+    Ware<b>Pro</b></div>
+  <div class="sbar"><i></i></div>
+  <div class="sm">INITIALIZING DIGITAL TWIN · SYNCING 1,742 ASSETS</div>
+</div>
+<div id="fade"></div>
+<div id="tip"></div>
+<div class="letterbox top"></div><div class="letterbox bot"></div><div class="vignette"></div>
+
+<!-- ============ TOP BAR ============ -->
+<div id="topbar">
+  <div class="logo">
+    <svg width="30" height="30" viewBox="0 0 32 32" fill="none">
+      <path d="M16 2 29 9.5v13L16 30 3 22.5v-13L16 2Z" stroke="#22d3ee" stroke-width="1.6"/>
+      <path d="M16 2v13M16 15 3 9.5M16 15l13-5.5M16 30V15" stroke="#22d3ee" stroke-width="1.2" opacity=".7"/>
+      <circle cx="16" cy="15" r="2.4" fill="#22d3ee"/>
+    </svg>
+    <div><div class="wm">Ware<b>Pro</b></div><div class="tag">Warehouse Intelligence Platform</div></div>
+  </div>
+  <div class="chip" id="sysStatus"><span class="dot" id="sysDot"></span><span class="lbl">SYSTEM</span><span class="val" id="sysVal">ALL OPERATIONAL</span></div>
+  <div class="chip"><span class="lbl">FACILITY</span><span class="val">DC-WEST-01 · FREMONT</span></div>
+  <div class="chip"><span class="lbl">DIGITAL TWIN</span><span class="val" style="color:var(--accent)">LIVE SYNC · 60 Hz</span></div>
+  <div class="chip" id="clock"><span class="lbl">SHIFT A</span><span class="val" id="clockVal">06:40:00</span></div>
+  <div class="chip"><span class="lbl">RENDER</span><span class="val" id="fpsVal">— FPS</span></div>
+</div>
+
+<!-- ============ ENTITY INSPECTOR ============ -->
+<div class="panel" id="inspector">
+  <h3>◈ Asset Inspector <span class="mini-logo">Ware<b>Pro</b> RTLS</span></h3>
+  <div class="igrid">
+    <div class="irow"><span class="l">Asset ID</span><span class="v" id="iId">—</span></div>
+    <div class="irow"><span class="l">Type</span><span class="v" id="iType">—</span></div>
+    <div class="irow"><span class="l">Zone</span><span class="v" id="iZone">—</span></div>
+    <div class="irow"><span class="l">Position</span><span class="v" id="iPos">—</span></div>
+    <div class="irow"><span class="l">Speed</span><span class="v" id="iSpd">—</span></div>
+    <div class="irow"><span class="l">Status</span><span class="v" id="iStat">—</span></div>
+  </div>
+  <div class="ibtns"><button id="btnFollow">◉ FOLLOW</button><button class="off" id="btnDeselect">✕ CLOSE</button></div>
+</div>
+
+<!-- ============ LEFT: DIGITAL TWIN ============ -->
+<div class="panel" id="twinPanel">
+  <h3>⬡ Digital Twin — Live Map <span class="mini-logo">Ware<b>Pro</b></span></h3>
+  <canvas id="twinMap" width="576" height="332"></canvas>
+  <div id="zoneOcc"></div>
+</div>
+
+<!-- ============ RIGHT: ANALYTICS ============ -->
+<div class="panel" id="statsPanel">
+  <h3>▤ Operations Analytics <span class="mini-logo">Ware<b>Pro</b></span></h3>
+  <div class="kgrid">
+    <div class="kpi"><div class="kl">Inventory Accuracy</div><div class="kv" id="kAcc">99.2<small>%</small></div><div class="kt up" id="kAccT">▲ 0.3% vs LW</div></div>
+    <div class="kpi"><div class="kl">Dock Utilization</div><div class="kv" id="kDock">78<small>%</small></div><div class="kt up" id="kDockT">▲ 6% vs LW</div></div>
+    <div class="kpi"><div class="kl">Occupancy</div><div class="kv" id="kOcc">64<small>%</small></div><div class="kt flat">— capacity ok</div></div>
+    <div class="kpi"><div class="kl">Pick Rate</div><div class="kv" id="kPick">142<small>/hr</small></div><div class="kt up">▲ 4% vs LW</div></div>
+    <div class="kpi"><div class="kl">Units Received</div><div class="kv" id="kIn">0</div><div class="kt flat" id="kInT">today</div></div>
+    <div class="kpi"><div class="kl">Units Shipped</div><div class="kv" id="kOut">0</div><div class="kt flat">today</div></div>
+  </div>
+  <div id="envRow">
+    <span>TEMP <b id="envT">21.4°C</b></span>
+    <span>HUMIDITY <b id="envH">47%</b></span>
+    <span>CO₂ <b id="envC">512 ppm</b></span>
+  </div>
+</div>
+
+<!-- ============ AI INSIGHTS ============ -->
+<div class="panel" id="aiPanel">
+  <h3>✦ WarePro AI Insights</h3>
+  <div id="aiList"></div>
+</div>
+
+<!-- ============ ALERTS ============ -->
+<div class="panel" id="alertPanel">
+  <h3>⚠ Active Alerts <span class="mini-logo" id="alCount">0 active</span></h3>
+  <div id="alertList"></div>
+</div>
+
+<!-- ============ CAMERA FEEDS ============ -->
+<div id="feeds">
+  <div class="feed" id="feed0">
+    <div class="fhdr"><span class="rec"></span>CAM-01 · RECEIVING<span class="fai">AI ▣</span></div>
+    <canvas class="ov"></canvas><div class="scan"></div><div class="fft" id="fft0"></div>
+  </div>
+  <div class="feed" id="feed1">
+    <div class="fhdr"><span class="rec"></span>CAM-07 · RESTRICTED ZONE<span class="fai">AI ▣</span></div>
+    <canvas class="ov"></canvas><div class="scan"></div><div class="fft" id="fft1"></div>
+  </div>
+</div>
+
+<!-- ============ LOWER THIRD ============ -->
+<div id="lowerThird"><div class="sn" id="ltN">SCENE 01</div><div class="st" id="ltT">AERIAL OVERVIEW</div><div class="ss" id="ltS"></div></div>
+
+<!-- ============ CRITICAL BANNER ============ -->
+<div id="banner"><span class="bi">⛔</span><div><div class="bt">UNAUTHORIZED ACCESS — RESTRICTED ZONE</div><div class="bs" id="bannerSub">CAM-07 · Person detected · confidence 0.97</div></div></div>
+
+<!-- ============ ALERT DETAIL CARD ============ -->
+<div id="alertCard">
+  <div class="ach"><div class="ai">⛔</div><div><div class="at">Unauthorized Zone Access</div><div class="aid" id="acId">EVT-2841 · CRITICAL · OPEN</div></div></div>
+  <div class="agrid">
+    <div><div class="l">Zone</div><div class="v">HIGH-VALUE CAGE (R-1)</div></div>
+    <div><div class="l">Source</div><div class="v">CAM-07 · AI VISION</div></div>
+    <div><div class="l">Detection</div><div class="v">PERSON · 0.97 conf</div></div>
+    <div><div class="l">Location</div><div class="v" id="acLoc">X 67.0 · Z 39.0</div></div>
+    <div><div class="l">Badge Scan</div><div class="v" style="color:var(--crit)">NONE — NO CREDENTIAL</div></div>
+    <div><div class="l">Dwell Time</div><div class="v" id="acDwell">00:04</div></div>
+  </div>
+  <div class="arec"><b>WarePro AI recommends:</b> Dispatch nearest security personnel (S. Reyes, 38 m away). Lock cage access door R-1-A. Flag inventory snapshot for cycle-count verification.</div>
+  <div class="abtns"><button class="bp" id="btnDispatch">DISPATCH SECURITY</button><button class="bs2" id="btnAck">ACKNOWLEDGE</button></div>
+</div>
+
+<!-- ============ CONTROLS ============ -->
+<div id="controls">
+  <button id="btnPrev">◀</button>
+  <button id="btnPlay">⏸ PAUSE</button>
+  <button id="btnNext">▶</button>
+  <div id="dots"></div>
+  <button id="btnSpeed" title="Simulation speed">1×</button>
+  <button id="btnViews">VIEWS ▾</button>
+  <button id="btnLayers">LAYERS ▾</button>
+  <button id="btnFree">FREE CAM</button>
+  <button id="btnUI" title="Immersive view (Tab)">HIDE UI</button>
+  <div class="pop" id="popViews"><div class="ph">Saved Viewpoints</div></div>
+  <div class="pop" id="popLayers"><div class="ph">Visualization Layers</div></div>
+</div>
+<div id="progress"></div>
+<div id="hint">SPACE play · ←→ / 1-0 scenes · click any asset to inspect · F free cam · TAB hide UI</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
